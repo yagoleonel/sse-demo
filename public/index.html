@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test SSE</title>
+</head>
+<body>
+    <h1>Test SSE</h1>
+    <button onclick="subscribe()">Subscribe</button>
+    <div id="subscription-id"></div>
+    <button onclick="addMessage()">Add Message</button>    
+
+    <div id="sse-result" />
+    <script>
+        let subscriptionId
+        async function subscribe () {
+            try {
+                const response = await fetch('/sse/subscribe', {
+                    method: 'POST',
+                });
+
+                const data = await response.json();
+                subscriptionId = data.subscriptionId;
+
+                document.getElementById('subscription-id').innerHTML = subscriptionId
+
+                return consume(subscriptionId)
+            } catch (error) {
+                console.error('Error adding user:', error);
+            }            
+        }
+
+        async function consume () {
+            // Event listener for SSE
+            const eventSource = new EventSource(`/sse/consume?subscriptionId=${subscriptionId}`);
+            eventSource.addEventListener('messages', (event) => {
+                const eventData = JSON.parse(event.data);
+                console.log('Received SSE:', eventData);
+
+                // Update the HTML to display SSE messages
+                const sseResult = document.getElementById('sse-result');
+                const messages = eventData.messages
+                for (const message of messages) {
+                    sseResult.innerHTML += `<p> Text: ${message.text} | Id: ${message.id} </p>`;
+                }
+
+            });
+        }
+
+        async function addMessage() {
+            try {
+                const response = await fetch('/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: `${Date.now()} 12345`,
+                        subscriptionId
+                    }),
+                });
+
+                const data = await response.json();
+                console.log(data);
+            } catch (error) {
+                console.error('Error adding message:', error);
+            }
+        }
+
+    </script>
+</body>
+</html>
