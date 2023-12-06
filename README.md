@@ -1,6 +1,6 @@
 # Test SSE Project
 
-This project demonstrates (very simply) one implementation of Server-Sent Events (SSE) with a Node.js backend using Express, Sequelize for database interaction, and MySQL as the database. SSE allows the server to push real-time updates to the client over a single, long-lived HTTP connection.
+This project demonstrates the implementation of Server-Sent Events (SSE) with a Node.js backend using Express, Sequelize for database interaction, and MySQL as the database. SSE allows the server to push real-time updates to the client over a single, long-lived HTTP connection.
 
 ## Table of Contents
 

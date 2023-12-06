@@ -1,44 +1,18 @@
-import { Op } from "sequelize";
-import { Message, Subscription } from "./sequelize";
+import { Request, Response } from "express";
 
 export default class SseManager {
     public lastMessageSent: Record<string, number> = {};
+    private subscriptions: Record<string, Response> = {}
 
-    // Open a new subscription
-    public async createSubscription (): Promise<Subscription> {
-        return await Subscription.create();
+    public async addClient(subscriptionId: string, { req, res }: { req: Request, res: Response }): Promise<void> {
+        req.on('close', () => {
+            delete this.subscriptions[subscriptionId];
+            res.end();
+        })
+        this.subscriptions[subscriptionId] = res;
     }
 
-    // Close subscription
-    public async deleteSubscription (subscriptionId: string): Promise<void> {
-        await Subscription.destroy({
-            where: {
-                id: subscriptionId
-            }
-        });
-        delete this.lastMessageSent[subscriptionId];
-    }
-
-    // Poll DB messages for the subscription
-    public async getSubscriptionMessages (subscriptionId: string): Promise<Message[] | null> {
-        const lastIndex = this.lastMessageSent[subscriptionId] || 0;
-        const subs = await Message.findAll({
-            where: {
-                id: {
-                    [Op.gt]: lastIndex
-                },
-                subscriptionId,
-            },
-            order: [[
-                'createdAt', 'DESC'
-            ]],
-            limit: 10
-        });
-        if (subs.length) {
-            const latestMessage = subs[subs.length - 1];
-            this.lastMessageSent[subscriptionId] = latestMessage.get('id');
-            return subs;
-        }
-        return null;
+    public async postMessage(subscriptionId: string, text: string): Promise<void> {
+        this.subscriptions[subscriptionId].write(`event:message\ndata:${JSON.stringify({ text })}\n\n`)
     }
 }
