@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 
 export default class SseManager {
-    public lastMessageSent: Record<string, number> = {};
     private subscriptions: Record<string, Response> = {}
 
     public async addClient(subscriptionId: string, { req, res }: { req: Request, res: Response }): Promise<void> {
